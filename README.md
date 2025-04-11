@@ -1,2 +1,2 @@
-# Conversi-n_ER_AFN
+# Conversión_ER_AFN
 Repositorio para guardar los avances del proyecto
