@@ -229,7 +229,7 @@ class RegexGUI:
         if not self.image_paths:
             return
         path = os.path.join("output", self.image_paths[self.image_index])
-        img = Image.open(path).resize((800, 600), Image.Resampling.LANCZOS)
+        img = Image.open(path).resize((1000, 400), Image.Resampling.LANCZOS)
         self.tkimage = ImageTk.PhotoImage(img)
         self.image_label.config(image=self.tkimage)
 
