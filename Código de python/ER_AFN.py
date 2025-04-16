@@ -48,7 +48,6 @@ class ExpresionRegularAFN:
         # Convierte la expresión regular a un autómata finito no determinista (AFN)
         self.estado_inicial = 'q0'
         estado_actual = self.estado_inicial
-        contador = 1
         # self.estados_finales.add('q1')
         self.transiciones.append(('q0', self.expresion, 'q1'))
         # self.alfabeto.add('ε')  # Agrega la transición epsilon al alfabeto
@@ -63,14 +62,12 @@ class ExpresionRegularAFN:
                 self.estados.add(nuevo_estado)
                 self.transiciones.append((estado_actual, char, nuevo_estado))
                 estado_actual = nuevo_estado
-                contador += 1
             else:
                 if char == '|':
                     nuevo_estado = 'q' + str(len(self.transiciones) + 1)
                     self.transiciones.append((estado_actual, '|', nuevo_estado))
                     self.estados.add(nuevo_estado)
                     estado_actual = nuevo_estado
-                    contador += 1
                 elif char == '*':
                     self.transiciones.append((estado_actual, 'ε', estado_actual))
                 elif char == '+':
