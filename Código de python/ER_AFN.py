@@ -15,7 +15,8 @@ class ExpresionRegularAFN:
         # Verifica si la expresión regular tiene paréntesis balanceados 
         stack = [] 
         for char in self.expresion: 
-            if char == '(': stack.append(char) 
+            if char == '(': 
+                stack.append(char) 
             elif char == ')': 
                 if not stack or stack.pop() != '(': 
                     return False 
@@ -51,23 +52,26 @@ class ExpresionRegularAFN:
         # self.estados_finales.add('q1')
         self.transiciones.append(('q0', self.expresion, 'q1'))
         # self.alfabeto.add('ε')  # Agrega la transición epsilon al alfabeto
+        contador = 0
 
         for char in self.expresion:
             #if char in self.alfabeto and char not in self.esOperador(char):
             if not self.esOperador(char):
                 # Si el carácter es parte del alfabeto, se crea una transición
                 # nuevo_estado = f"q{contador}"
-                nuevo_estado = 'q' + str(len(self.transiciones) + 1)
+                nuevo_estado = f'q{contador + 1}'
                 self.estados.add(estado_actual)
                 self.estados.add(nuevo_estado)
                 self.transiciones.append((estado_actual, char, nuevo_estado))
                 estado_actual = nuevo_estado
+                contador += 1
             else:
-                if char == '|':
-                    nuevo_estado = 'q' + str(len(self.transiciones) + 1)
+                if char == '|' or char == ',':
+                    nuevo_estado = f'q{contador + 1}'
                     self.transiciones.append((estado_actual, '|', nuevo_estado))
                     self.estados.add(nuevo_estado)
                     estado_actual = nuevo_estado
+                    contador += 1
                 elif char == '*':
                     self.transiciones.append((estado_actual, 'ε', estado_actual))
                 elif char == '+':
