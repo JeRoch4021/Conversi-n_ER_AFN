@@ -44,29 +44,6 @@ class ExpresionRegularAFN:
             print("Error: Paréntesis no balanceados en la expresión regular.")
             return False
         return True
-    
-    # Convierte una expresión regular en notación postfija usando el algoritmo Shunting Yard
-    # Se utiliza para asignar prioridad a los operadores de la expresion regular
-    def cambiar_a_postfijo(self, regex):
-        precedencias = {'*':3, '+':3, '?': 3, '^':3, '.':2, '|':1, ',':1}
-        salida = ''
-        pila = []
-        for caracter in regex:
-            if not self.esOperador(caracter):
-                salida += caracter
-            elif caracter == '(':
-                pila.append(caracter)
-            elif caracter == ')':
-                while pila and pila[-1] != '(':
-                    salida += pila.pop()
-                pila.pop()
-            else:
-                while pila and pila[-1] != '(' and precedencias.get(caracter, 0) <= precedencias.get(pila[-1], 0):
-                    salida += pila.pop()
-                pila.append(caracter)
-        while pila:
-            salida += pila.pop()
-        return salida
         
     def conversion_a_afn(self):
         # Convierte la expresión regular a un autómata finito no determinista (AFN)
