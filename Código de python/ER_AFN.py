@@ -46,41 +46,58 @@ class ExpresionRegularAFN:
         return True
         
     def conversion_a_afn(self):
-        # Convierte la expresión regular a un autómata finito no determinista (AFN)
-        self.estado_inicial = 'q0'
-        estado_actual = self.estado_inicial
-        # self.estados_finales.add('q1')
-        self.transiciones.append(('q0', self.expresion, 'q1'))
-        # self.alfabeto.add('ε')  # Agrega la transición epsilon al alfabeto
-        contador = 0
-
-        for char in self.expresion:
-            #if char in self.alfabeto and char not in self.esOperador(char):
-            if not self.esOperador(char):
-                # Si el carácter es parte del alfabeto, se crea una transición
-                # nuevo_estado = f"q{contador}"
-                nuevo_estado = f'q{contador + 1}'
-                self.estados.add(estado_actual)
-                self.estados.add(nuevo_estado)
-                self.transiciones.append((estado_actual, char, nuevo_estado))
-                estado_actual = nuevo_estado
-                contador += 1
-            else:
-                if char == '|' or char == ',':
-                    nuevo_estado = f'q{contador + 1}'
-                    self.transiciones.append((estado_actual, '|', nuevo_estado))
-                    self.estados.add(nuevo_estado)
-                    estado_actual = nuevo_estado
-                    contador += 1
-                elif char == '*':
-                    self.transiciones.append((estado_actual, 'ε', estado_actual))
-                elif char == '+':
-                    self.transiciones.append((estado_actual, 'ε', estado_actual))
-                elif char == '?':
-                    self.transiciones.append((estado_actual, 'ε', estado_actual))
-
-        self.estados.add(estado_actual)
-        self.estados_finales.add(estado_actual)
+    # Convierte la expresión regular a un autómata finito no determinista (AFN)
+    self.transiciones.append(('q0', self.expresion, 'q1'))
+    print ("Transiciones: ", self.transiciones) # Imprime la primera transición
+    self.alfabeto.add('ε')  # Agrega la transición epsilon al alfabeto
+    contador = 2 # Contador para los estados(q0, q1 son los estados iniciales y finales respectivamente)
+    cursorEstado = 0 # Cursor para recorrer el conjunto de estados
+    filaSubexp = [] # Pila para almacenar caracteres o subexpresiones
+    # Separar los caracteres o subexpresiones concatenados
+    for i, char in enumerate(self.expresion):
+        if char in self.alfabeto:
+            if i < len(self.expresion) - 1 and self.expresion[i + 1] == '.':
+                # Si el siguiente carácter es un operador de concatenación, se crea una transición
+                filaSubexp.append(char)
+            elif i < len(self.expresion) - 1 and self.esOperador(self.expresion[i + 1] and self.expresion[i + 1] != '.' and self.expresion[i + 1] != '('):
+                # Si el siguiente caracter es un operador se añade a la subexpresión
+                subexpresion = char + self.expresion[i + 1]
+                filaSubexp.append(subexpresion)
+        elif char == '(':
+            # Si encuentra un paréntesis de apertura, lo agrega a la pila
+            subexp = '('
+            for j in range(i + 1, len(self.expresion)):
+                if self.expresion[j] == ')':
+                    subexp += self.expresion[j] # Agrega el paréntesis de cierre a la subexpresión
+                    if i < len(self.expresion) - 1 and self.esOperador(self.expresion[i + 1] and self.expresion[i + 1] != '.'):
+                        # Si el siguiente carácter es un operador, se añade a la subexpresión
+                        subexp += self.expresion[i + 1]
+                    break # Sale del bucle al encontrar el paréntesis de cierre
+                subexp += self.expresion[j]
+            filaSubexp.append(subexp) # Agrega la subexpresión a la pila
+    
+    # Procesar la pila para crear transiciones
+    while filaSubexp:
+        subexpresion = filaSubexp[0] # Toma el primer elemento de la pila
+        filaSubexp.remove(filaSubexp[0]) # Elimina el primer elemento de la pila
+        self.estados.insert(len(self.estados)-1, 'q' + str(contador)) # Agrega un nuevo estado en la penúltima posición del conjunto de estados
+        self.transiciones.append((self.estados[cursorEstado], subexpresion, self.estados[cursorEstado+1])) # Crea una transición entre el estado actual y el nuevo estado
+        cursorEstado += 1 # Actualiza el cursor al nuevo estado
+        contador += 1 # Incrementa el contador de estados
+    
+    # Procesar subexpresiones
+    for exp in self.transiciones:
+        if len(exp[1]) > 1: # Si la subexpresión tiene más de un carácter
+            for i in range(len(exp[1])):
+                if exp[1][i] == '.':
+                    # Si encuentra un operador de concatenación, crea una transición
+                    self.transiciones.append((exp[0], exp[1][i], exp[2]))
+                elif exp[1][i] == '|':
+                    # Si encuentra un operador OR, crea una transición
+                    self.transiciones.append((exp[0], exp[1][i], exp[2]))
+                elif exp[1][i] == '*':
+                    # Si encuentra un operador de Kleene, crea una transición
+                    self.transiciones.append((exp[0], exp[1][i], exp[2]))
 
     def mostrar_AFN(self):
         print("AFN: ")
