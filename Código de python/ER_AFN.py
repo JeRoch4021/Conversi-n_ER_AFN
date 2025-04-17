@@ -49,17 +49,16 @@ class ExpresionRegularAFN:
         # Convierte la expresión regular a un autómata finito no determinista (AFN)
         self.estado_inicial = 'q0'
         estado_actual = self.estado_inicial
-        # self.estados_finales.add('q1')
         self.transiciones.append(('q0', self.expresion, 'q1'))
         # self.alfabeto.add('ε')  # Agrega la transición epsilon al alfabeto
-        contador = 0
+        contador = 1
 
         for char in self.expresion:
             #if char in self.alfabeto and char not in self.esOperador(char):
             if not self.esOperador(char):
                 # Si el carácter es parte del alfabeto, se crea una transición
                 # nuevo_estado = f"q{contador}"
-                nuevo_estado = f'q{contador + 1}'
+                nuevo_estado = f'q{contador}'
                 self.estados.add(estado_actual)
                 self.estados.add(nuevo_estado)
                 self.transiciones.append((estado_actual, char, nuevo_estado))
@@ -67,13 +66,26 @@ class ExpresionRegularAFN:
                 contador += 1
             else:
                 if char == '|' or char == ',':
-                    nuevo_estado = f'q{contador + 1}'
-                    self.transiciones.append((estado_actual, '|', nuevo_estado))
-                    self.estados.add(nuevo_estado)
-                    estado_actual = nuevo_estado
-                    contador += 1
+                    nuevo_estado = f'q{contador}'
+                    estado_intermedio = f'q{contador + 1}'
+                    self.transiciones.append((estado_actual, 'ε', nuevo_estado))
+                    self.transiciones.append((estado_actual, 'ε', estado_intermedio))
+                    self.estados.update([estado_actual, nuevo_estado, estado_intermedio])
+                    estado_actual = f'q{contador + 2}'
+                    self.transiciones.append((nuevo_estado, 'ε', estado_actual))
+                    self.transiciones.append((estado_intermedio, 'ε', estado_actual))
+                    self.estados.add(estado_actual)
+                    contador += 3
                 elif char == '*':
-                    self.transiciones.append((estado_actual, 'ε', estado_actual))
+                    estado_ciclo_inicial = f'q{contador}'
+                    estado_ciclo_final = f'q{contador + 1}'
+                    self.transiciones.append((estado_actual, 'ε', estado_ciclo_inicial))
+                    self.transiciones.append((estado_ciclo_inicial, 'ε', estado_ciclo_final))
+                    self.transiciones.append((estado_ciclo_final, 'ε', estado_ciclo_inicial))
+                    self.transiciones.append((estado_ciclo_final, 'ε', estado_ciclo_inicial))
+                    self.estados.update([estado_ciclo_inicial, estado_ciclo_final])
+                    estado_actual = estado_ciclo_final
+                    contador += 2
                 elif char == '+':
                     self.transiciones.append((estado_actual, 'ε', estado_actual))
                 elif char == '?':
