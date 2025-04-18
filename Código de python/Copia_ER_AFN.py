@@ -82,14 +82,13 @@ class ExpresionRegularAFN:
         # Flecha desde el nodo ficticio al estado incial
         dot.edge('', estado_inicial)
 
+        # Recopilar todos los estados involucrados en las transiciones
         estados_involucrados = set()
         for origen, simbolo, destino in transiciones_parciales:
             estados_involucrados.update([origen, destino])
-        
-        estados_ordenados = sorted(self.estados)
 
         # Dibujar estados como nodos
-        for estado in estados_ordenados:
+        for estado in estados_involucrados:
             if estado in estados_finales:
                 dot.node(estado, shape='doublecircle') # Forma par a los estados finales
             else:
@@ -109,6 +108,7 @@ class ExpresionRegularAFN:
         dot.render(filename=ruta_salida, cleanup=True)
 
     def conversion_a_afn(self):
+        self.estados = set()
         postfijo = self.cambiar_a_postfijo(self.expresion)
         contador = 0
         paso = 1
