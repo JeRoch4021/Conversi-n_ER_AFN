@@ -167,7 +167,7 @@ class ExpresionRegular:
               contador += 1
               cursorEstado += 1
 
-  def mostrar_afn(self):
+    def mostrar_afn(self):
       print("AFN: ")
       print("K (Estados): ", self.estados)
       print("Σ (Alfabeto): ", self.alfabeto)
