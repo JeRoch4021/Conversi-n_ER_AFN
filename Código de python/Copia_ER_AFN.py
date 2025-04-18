@@ -1,4 +1,6 @@
 import re
+import os
+from graphviz import Digraph
 
 class ExpresionRegularAFN:
 
@@ -67,16 +69,49 @@ class ExpresionRegularAFN:
         while pila:
             salida += pila.pop()
         return salida
+
+    def proyeccion_grafica_paso_a_paso(self, transiciones_parciales, estados_finales, estado_inicial, paso):
+        # Crear un grafo orientado a la derecha
+        dot = Digraph(comment='Construccion del AFN', format='png')
+        dot.attr(rankdir ='LR') # Visualización horizontal, representación izquierda a derecha
+        dot.attr('node', shape='circle')
+
+        # Nodo ficticio para la flecha de inicio
+        dot.node('', shape='none')
+
+        # Flecha desde el nodo ficticio al estado incial
+        dot.edge('', estado_inicial)
+
+        estados_involucrados = set()
+        for origen, simbolo, destino in transiciones_parciales:
+            estados_involucrados.update([origen, destino])
         
+        estados_ordenados = sorted(self.estados)
+
+        # Dibujar estados como nodos
+        for estado in estados_ordenados:
+            if estado in estados_finales:
+                dot.node(estado, shape='doublecircle') # Forma par a los estados finales
+            else:
+                dot.node(estado)
+
+        # Dibujar las transiciones
+        for origen, simbolo, destino in transiciones_parciales:
+            label = 'ε' if simbolo == 'ε' else simbolo
+            dot.edge(origen, destino, label=label)
+
+        # Guardar las imagenes
+        # Crear el directorio sino existe
+        if not os.path.exists("AFN_paso_por_paso"):
+            os.makedirs("AFN_paso_por_paso")
+        # Ruta completa del archivo de salida
+        ruta_salida = os.path.join("AFN_paso_por_paso", f'AFN_paso_{paso:02}')
+        dot.render(filename=ruta_salida, cleanup=True)
+
     def conversion_a_afn(self):
-        self.estado_inicial = None
-        self.estados = set()
-        self.transiciones = []
-        self.estados_finales = set()
-        self.transiciones.append(('q0', self.expresion, 'q1'))
-        # self.alfabeto.add('ε')  # Agrega la transición epsilon al alfabeto
         postfijo = self.cambiar_a_postfijo(self.expresion)
         contador = 0
+        paso = 1
 
         def nuevo_estado():
             nonlocal contador
@@ -87,18 +122,21 @@ class ExpresionRegularAFN:
         pila = []
 
         for caracter in postfijo:
-            #if char in self.alfabeto and char not in self.esOperador(char):
             if not self.esOperador(caracter):
                 # Si el carácter es parte del alfabeto, se crea una transición
                 Q1, Q2 = nuevo_estado(), nuevo_estado()
                 self.transiciones.append((Q1, caracter, Q2))
                 pila.append((Q1, Q2))
+                self.proyeccion_grafica_paso_a_paso(self.transiciones.copy(), {Q2}, Q1, paso)
+                paso += 1
             else:
                 if caracter == '.':
                     expresion_2 = pila.pop()
                     expresion_1 = pila.pop()
                     self.transiciones.append((expresion_1[1], 'ε', expresion_2[0]))
                     pila.append((expresion_1[0], expresion_2[1]))
+                    self.proyeccion_grafica_paso_a_paso(self.transiciones.copy(), {expresion_2[1]}, expresion_1[0], paso)
+                    paso += 1
                 elif caracter == '|' or caracter == ',':
                     estado_inicial, estado_final = nuevo_estado(), nuevo_estado()
                     expresion_2 = pila.pop()
@@ -110,6 +148,8 @@ class ExpresionRegularAFN:
                         (expresion_2[1], 'ε', estado_final)
                     ]
                     pila.append((estado_inicial, estado_final))
+                    self.proyeccion_grafica_paso_a_paso(self.transiciones.copy(), {estado_final}, estado_inicial, paso)
+                    paso += 1
                 elif caracter == '*':
                     estado_inicial, estado_final = nuevo_estado(), nuevo_estado()
                     expresion = pila.pop()
@@ -120,6 +160,8 @@ class ExpresionRegularAFN:
                         (expresion[1], 'ε', estado_final)
                     ]
                     pila.append((estado_inicial, estado_final))
+                    self.proyeccion_grafica_paso_a_paso(self.transiciones.copy(), {estado_final}, estado_inicial, paso)
+                    paso += 1
                 elif caracter == '+':
                     estado_inicial, estado_final = nuevo_estado(), nuevo_estado()
                     expresion = pila.pop()
@@ -129,6 +171,8 @@ class ExpresionRegularAFN:
                         (expresion[1], 'ε', estado_final)
                     ]
                     pila.append((estado_inicial, estado_final))
+                    self.proyeccion_grafica_paso_a_paso(self.transiciones.copy(), {estado_final}, estado_inicial, paso)
+                    paso += 1
                 elif caracter == '?':
                     estado_inicial, estado_final = nuevo_estado(), nuevo_estado()
                     expresion = pila.pop()
@@ -138,10 +182,14 @@ class ExpresionRegularAFN:
                         (expresion[1], 'ε', estado_final)
                     ]
                     pila.append((estado_inicial, estado_final))
+                    self.proyeccion_grafica_paso_a_paso(self.transiciones.copy(), {estado_final}, estado_inicial, paso)
+                    paso += 1
                 elif caracter == '^':
                     estado_inicial, estado_final = nuevo_estado(), nuevo_estado()
                     self.transiciones.append((estado_inicial, 'ε', estado_final))
                     pila.append((estado_inicial, estado_final))
+                    self.proyeccion_grafica_paso_a_paso(self.transiciones.copy(), {estado_final}, estado_inicial, paso)
+                    paso += 1
 
         inicio, fin = pila.pop()
         self.estado_inicial = inicio
@@ -151,16 +199,18 @@ class ExpresionRegularAFN:
             self.estados.update([transicion[0], transicion[2]])
 
     def mostrar_AFN(self):
+        lista_estados_ordenados = sorted(self.estados, key=lambda k: int(k[1:]))
+        alfabeto_ordenado = sorted(self.alfabeto)
         print("AFN: ")
-        print("K (Estados): ", self.estados)
-        print("Σ (Alfabeto): ", self.alfabeto)
+        #print("K (Estados): ", self.estados)
+        print("K (Estados): ", lista_estados_ordenados)
+        print("Σ (Alfabeto): ", alfabeto_ordenado)
         print("S (Estado inicial): ", self.estado_inicial)
         print("F (Estados finales): ", self.estados_finales)
         print("δ (Transiciones): ")
         for transicion in self.transiciones:
             print(f"{transicion[0]} --{transicion[1]}--> {transicion[2]}")
         
-
     # Funcion principal para ejecutar el programa
     def main(self):
         if self.analizar_expresion():
