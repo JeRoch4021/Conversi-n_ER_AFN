@@ -6,13 +6,13 @@ class ExpresionRegular:
     # Constructor de la clase
     def __init__(self):
         self.expresion = input("Ingrese la expresión regular: ")
-        self.alfabeto = set(re.findall(r'[a-zA-Z0-9]', self.expresión)) # Extrae el alfabeto de la expresión regular
+        self.alfabeto = set(re.findall(r'[a-zA-Z0-9]', self.expresion)) # Extrae el alfabeto de la expresión regular
         self.estado_inicial = 'q0' # Estado inicial del autómata
-        self.estado_final = 'q1' # Estado final del autómata
+        self.estados_finales = 'q1' # Estado final del autómata
         self.estados = [] # Conjunto de estados del autómata
         self.transiciones = [] # Lista de transiciones del autómata
         self.estados.append(self.estado_inicial) # Agrega el estado inicial al conjunto de estados
-        self.estados.append(self.estado_final) # Agrega el estado final al conjunto de estados
+        self.estados.append(self.estados_finales) # Agrega el estado final al conjunto de estados
 
     def balanceoParentesis(self):
         # Verifica si la expresión regular tiene paréntesis balanceados
@@ -30,9 +30,10 @@ class ExpresionRegular:
         return char in {'|', ',', '*', '+', '?', '^', '.', '(', ')'}
     
     def analizar_expresion(self):
-        if not self.balanceoParentesis(self):
+        if not self.balanceoParentesis():
             print("Error: Paréntesis no balanceados en la expresión regular.")
             return False
+        return True
   
     def insertar_concatenacion(self, regex):
          # Inserta operadores de concatenación explícitos (.) donde sea necesario
@@ -167,7 +168,7 @@ class ExpresionRegular:
                 contador += 1
                 cursorEstado += 1
   
-      def mostrar_afn(self):
+    def mostrar_afn(self):
         print("AFN: ")
         print("K (Estados): ", self.estados)
         print("Σ (Alfabeto): ", self.alfabeto)
