@@ -213,8 +213,9 @@ class ExpresionRegularAFN:
                     if self.transiciones[i][0] != inicio_sub_afn:
                         self.transiciones.append((estado_retorno, self.transiciones[i][1], estado_intermedio))
 
+                # Entrada de la transicion vacia al estado intermedio
                 self.transiciones.append((fin_sub_afn, 'ε', estado_intermedio))
-                # Salida al estado final
+                # Salida de la transicion vacia al estado final
                 self.transiciones.append((estado_intermedio, 'ε', estado_final))
                 
                 # Empujar el nuevo bloque a la pila
