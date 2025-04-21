@@ -190,33 +190,51 @@ class ExpresionRegularAFN:
                 paso += 1
             elif caracter == '+':
                 estado_inicial, estado_final = nuevo_estado(), nuevo_estado()
+                estado_intermedio = nuevo_estado()
+                estado_retorno = nuevo_estado()
                 expresion = pila.pop()
-                        
-                self.transiciones.append((estado_inicial, 'ε', expresion[0]))
 
-                simbolo_repetido = None
-                for (origen, simbolo, destino) in self.transiciones:
-                    if simbolo != 'ε':
-                        simbolo_repetido = simbolo
-                        break
+                inicio_sub_afn, fin_sub_afn = expresion
+                
+                for i in range(len(self.transiciones)):
+                    if self.transiciones[i][0] == inicio_sub_afn:
+                        self.transiciones[i] = (estado_inicial, self.transiciones[i][1], self.transiciones[i][2])
+                
+                # Cambiamos el sub estado inicial por el nuevo estado inicial
+                inicio_sub_afn = estado_inicial
 
-                # Bucle de repetición en el último estado
-                if simbolo_repetido:
-                    self.transiciones.append((expresion[1], simbolo_repetido, expresion[1]))
+                # Evalua si exite una concatenación entre dos o mas caracteres, de los contrario
+                # solo colocara una repetición al mismo estado.
+                for i in range(len(self.transiciones)):
+                    if (self.transiciones[i][0] == inicio_sub_afn and self.transiciones[i][2] == fin_sub_afn):
+                        self.transiciones.append((estado_intermedio, self.transiciones[i][1], estado_intermedio))
+                    if self.transiciones[i][2] != fin_sub_afn:
+                        self.transiciones.append((estado_intermedio, self.transiciones[i][1], estado_retorno))
+                    if self.transiciones[i][0] != inicio_sub_afn:
+                        self.transiciones.append((estado_retorno, self.transiciones[i][1], estado_intermedio))
 
-                self.transiciones.append((expresion[1], 'ε', estado_final))
-
+                self.transiciones.append((fin_sub_afn, 'ε', estado_intermedio))
+                # Salida al estado final
+                self.transiciones.append((estado_intermedio, 'ε', estado_final))
+                
                 # Empujar el nuevo bloque a la pila
                 pila.append((estado_inicial, estado_final))
                 self.proyeccion_grafica_paso_a_paso(self.transiciones.copy(), {estado_final}, estado_inicial, paso)
                 paso += 1
+
             elif caracter == '?':
                 estado_inicial, estado_final = nuevo_estado(), nuevo_estado()
                 expresion = pila.pop()
 
-                self.transiciones.append((estado_inicial, '', expresion[0]))
-                self.transiciones.append((estado_inicial, '', estado_final))
-                self.transiciones.append((expresion[1], '', estado_final))
+                # Redirige transiciones de entrada
+                for i in range(len(self.transiciones)):
+                    if self.transiciones[i][0] == expresion[0]:
+                        self.transiciones[i] = (estado_inicial, self.transiciones[i][1], self.transiciones[i][2])
+                    if self.transiciones[i][2] == expresion[1]:
+                        self.transiciones[i] = (self.transiciones[i][0], self.transiciones[i][1], estado_final)
+
+                # Transición ε directa que representa "cero veces"
+                self.transiciones.append((estado_inicial, 'ε', estado_final))
 
                 pila.append((estado_inicial, estado_final))
                 self.proyeccion_grafica_paso_a_paso(self.transiciones.copy(), {estado_final}, estado_inicial, paso)
@@ -224,7 +242,8 @@ class ExpresionRegularAFN:
             elif caracter == '^':
                 estado_inicial, estado_final = nuevo_estado(), nuevo_estado()
 
-                self.transiciones.append((estado_inicial, '', estado_final))
+                # Transicion ε de algo o nada
+                self.transiciones.append((estado_inicial, 'ε', estado_final))
                     
                 pila.append((estado_inicial, estado_final))
                 self.proyeccion_grafica_paso_a_paso(self.transiciones.copy(), {estado_final}, estado_inicial, paso)
